@@ -4,6 +4,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +36,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -87,6 +93,7 @@ class MainActivity : ComponentActivity() {
 //                    columnList()
 //                    lazyColumnDemo()
 
+                    AnimationDemo()
                 }
             }
         }
@@ -107,7 +114,64 @@ fun DemoPreview() {
 //    textDemo()
 //    }
 //    columnList()
-    ConstrainLayoutDemo()
+//    ConstrainLayoutDemo()
+    AnimationDemo()
+}
+
+@Composable
+fun AnimationDemo() {
+    var isVisible by rememberSaveable {
+        mutableStateOf(false)
+    }
+    Column(modifier = Modifier.fillMaxSize()) {
+
+        Button(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            onClick = {
+                isVisible = !isVisible
+            }) {
+            Column(modifier = Modifier) {
+                Text(
+                    text = "Hello",
+                    modifier = Modifier.align(alignment = Alignment.CenterHorizontally)
+                )
+//                AnimatedVisibility(isVisible) {
+//                    Text(
+//                        text = "Say goodbye", modifier = Modifier
+//                            .padding(14.dp)
+//                            .width(100.dp)
+//                            .height(80.dp)
+//                    )
+//                }
+            }
+        }
+
+        Text(
+            modifier = Modifier
+                .background(Color.LightGray)
+                .animateContentSize()
+                .width(240.dp)
+                .align(Alignment.CenterHorizontally)
+                .padding(30.dp),
+            maxLines = if (isVisible)6 else 2,
+            text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. "
+        )
+
+        Text(
+            modifier = Modifier
+                .padding(24.dp)
+                .background(Color.LightGray)
+                .animateContentSize( animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioHighBouncy,
+                    stiffness = Spring.StiffnessMedium
+                ))
+                .width(240.dp)
+                .align(Alignment.CenterHorizontally)
+                .padding(30.dp),
+            maxLines = if (isVisible)10 else 2,
+            text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. "
+        )
+    }
 }
 
 @Composable
@@ -125,7 +189,7 @@ fun sideEffects() {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(key1 = lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_PAUSE){
+            if (event == Lifecycle.Event.ON_PAUSE) {
                 println("On pause called")
             }
         }
@@ -182,12 +246,16 @@ fun ConstrainLayoutDemo() {
     }
 
     ConstraintLayout(constraints, modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier
-            .background(Color.Green)
-            .layoutId("greenbox"))
-        Box(modifier = Modifier
-            .background(Color.Red)
-            .layoutId("redbox"))
+        Box(
+            modifier = Modifier
+                .background(Color.Green)
+                .layoutId("greenbox")
+        )
+        Box(
+            modifier = Modifier
+                .background(Color.Red)
+                .layoutId("redbox")
+        )
     }
 }
 
