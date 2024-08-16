@@ -26,6 +26,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
@@ -72,14 +80,83 @@ import com.lloydsbyte.jetpackdemo.ui.theme.JetpackDemoTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
+import java.util.Vector
+
+
+data class BottomNavItem(
+    val title: String,
+    val selectedIcon: ImageVector,
+    val unSelectedIcon: ImageVector,
+    val hasNews: Boolean,
+    val badgeCount: Int? = null
+)
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 //        enableEdgeToEdge()
         setContent {
             JetpackDemoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                val items = listOf(
+                    BottomNavItem(
+                        title = "Home",
+                        selectedIcon = Icons.Filled.Home,
+                        unSelectedIcon = Icons.Outlined.Home,
+                        hasNews = false
+                    ),
+                    BottomNavItem(
+                        title = "Chat",
+                        selectedIcon = Icons.Filled.Email,
+                        unSelectedIcon = Icons.Outlined.Email,
+                        hasNews = false,
+                        badgeCount = 22
+                    ),
+                    BottomNavItem(
+                        title = "Settings",
+                        selectedIcon = Icons.Filled.Settings,
+                        unSelectedIcon = Icons.Outlined.Settings,
+                        hasNews = true
+                    ),
+                )
+
+                var selectedIconIndex by rememberSaveable {
+                    mutableStateOf(0)
+                }
+                Surface {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        //Bottom Nav Bar
+                        bottomBar = {
+                            NavigationBar {
+                                items.forEachIndexed { index, bottomNavItem ->
+                                    NavigationBarItem(
+                                        selected = selectedIconIndex == index,
+                                        onClick = {
+                                            selectedIconIndex = index
+                                            //navController.navigation(bottomNavItem.title , if title is same as nav value
+                                                  },
+                                        label = {
+                                            Text(text = bottomNavItem.badgeCount.toString())
+                                        },
+                                        icon = {
+                                            BadgedBox(badge = {
+                                                if (bottomNavItem.badgeCount != null){
+                                                    Badge {
+                                                        Text(text = bottomNavItem.badgeCount.toString())
+                                                    }
+                                                } else if (bottomNavItem.hasNews) {
+                                                    Badge()
+                                                }
+                                            }) {
+                                                Icon(imageVector = if (index == selectedIconIndex) bottomNavItem.selectedIcon else bottomNavItem.unSelectedIcon, contentDescription = bottomNavItem.title)
+                                            }
+                                        })
+                                }
+                            }
+                        }
+                        ) { _ ->
+
 
 //                    ImageCard(
 //                        painter = painterResource(id = R.drawable.ic_bot),
@@ -93,7 +170,8 @@ class MainActivity : ComponentActivity() {
 //                    columnList()
 //                    lazyColumnDemo()
 
-                    AnimationDemo()
+                        AnimationDemo()
+                    }
                 }
             }
         }
@@ -161,10 +239,12 @@ fun AnimationDemo() {
             modifier = Modifier
                 .padding(24.dp)
                 .background(Color.LightGray)
-                .animateContentSize( animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioHighBouncy,
-                    stiffness = Spring.StiffnessMedium
-                ))
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioHighBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                )
                 .width(240.dp)
                 .align(Alignment.CenterHorizontally)
                 .padding(30.dp),
@@ -325,7 +405,7 @@ fun snackBarDemo(modifier: Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    ) { _ ->
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
