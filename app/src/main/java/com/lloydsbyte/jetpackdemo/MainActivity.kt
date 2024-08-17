@@ -76,6 +76,12 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHost
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.lloydsbyte.jetpackdemo.ui.theme.JetpackDemoTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapNotNull
@@ -98,6 +104,11 @@ class MainActivity : ComponentActivity() {
 //        enableEdgeToEdge()
         setContent {
             JetpackDemoTheme {
+
+                var selectedIconIndex by rememberSaveable {
+                    mutableStateOf(0)
+                }
+
                 val items = listOf(
                     BottomNavItem(
                         title = "Home",
@@ -117,12 +128,12 @@ class MainActivity : ComponentActivity() {
                         selectedIcon = Icons.Filled.Settings,
                         unSelectedIcon = Icons.Outlined.Settings,
                         hasNews = true
-                    ),
+                    )
                 )
 
-                var selectedIconIndex by rememberSaveable {
-                    mutableStateOf(0)
-                }
+                val rootNavController = rememberNavController()
+                val navBackStachEntry by rootNavController.currentBackStackEntryAsState()
+
                 Surface {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -135,13 +146,24 @@ class MainActivity : ComponentActivity() {
                                         onClick = {
                                             selectedIconIndex = index
                                             //navController.navigation(bottomNavItem.title , if title is same as nav value
-                                                  },
+                                            rootNavController.navigate(bottomNavItem.title) {
+                                                //Pops the backstack list, saves in memory
+                                                popUpTo(rootNavController.graph.findStartDestination().id) {
+                                                    saveState =
+                                                        true //Save the state of the previous back stack
+                                                }
+                                                launchSingleTop =
+                                                    true //Does not push new screen on the backstack, uses existing
+                                                restoreState =
+                                                    true //Restores the state of the last stack
+                                            }
+                                        },
                                         label = {
                                             Text(text = bottomNavItem.badgeCount.toString())
                                         },
                                         icon = {
                                             BadgedBox(badge = {
-                                                if (bottomNavItem.badgeCount != null){
+                                                if (bottomNavItem.badgeCount != null) {
                                                     Badge {
                                                         Text(text = bottomNavItem.badgeCount.toString())
                                                     }
@@ -149,13 +171,16 @@ class MainActivity : ComponentActivity() {
                                                     Badge()
                                                 }
                                             }) {
-                                                Icon(imageVector = if (index == selectedIconIndex) bottomNavItem.selectedIcon else bottomNavItem.unSelectedIcon, contentDescription = bottomNavItem.title)
+                                                Icon(
+                                                    imageVector = if (index == selectedIconIndex) bottomNavItem.selectedIcon else bottomNavItem.unSelectedIcon,
+                                                    contentDescription = bottomNavItem.title
+                                                )
                                             }
                                         })
                                 }
                             }
                         }
-                        ) { _ ->
+                    ) { _ ->
 
 
 //                    ImageCard(
@@ -170,13 +195,70 @@ class MainActivity : ComponentActivity() {
 //                    columnList()
 //                    lazyColumnDemo()
 
-                        AnimationDemo()
+//                        AnimationDemo()
+
+                        /** Instead of a normal navhost that is created in the navhost controller, build it like so **/
+                        NavHost(navController = rootNavController, startDestination = "home") {
+                            composable("home") {
+                                HomeNavHost()
+                            }
+                            composable("Middle") {
+                                HomeNavHost()//2
+                            }
+                            composable("LastScreen") {
+                                HomeNavHost()//3
+                            }
+
+                        }
                     }
                 }
             }
         }
     }
 }
+
+@Composable
+fun HomeNavHost() {
+    val homeNavController = rememberNavController()
+    NavHost(homeNavController, startDestination = "home1") {
+        for (i in 1..10) {
+            composable("home$i") {
+                GenericScreen(
+                    text = "Home $i",
+                    onNextClick = {
+                        if (i < 10) {
+                            homeNavController.navigate("home${i + 1}")
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
+
+    @Composable
+    fun GenericScreen(
+        text: String,
+        onNextClick: () -> Unit
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(text = text)
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onNextClick) {
+                Text("Next")
+            }
+        }
+    }
+
+
+    /**
+     * Use one host per tab to have their own backstack, so one tab is unaware of the other tabs screens
+     */
 
 
 @Preview(showBackground = true)
@@ -231,7 +313,7 @@ fun AnimationDemo() {
                 .width(240.dp)
                 .align(Alignment.CenterHorizontally)
                 .padding(30.dp),
-            maxLines = if (isVisible)6 else 2,
+            maxLines = if (isVisible) 6 else 2,
             text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. "
         )
 
@@ -248,7 +330,7 @@ fun AnimationDemo() {
                 .width(240.dp)
                 .align(Alignment.CenterHorizontally)
                 .padding(30.dp),
-            maxLines = if (isVisible)10 else 2,
+            maxLines = if (isVisible) 10 else 2,
             text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. "
         )
     }
